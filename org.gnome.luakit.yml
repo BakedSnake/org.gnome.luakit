@@ -1,0 +1,72 @@
+app-id: org.gnome.luakit
+runtime: org.gnome.Platform
+runtime-version: '3.34'
+sdk: org.gnome.Sdk
+command: luakit 
+finish-args: 
+  - --share=network
+  - --share=ipc
+  - --device=dri
+  - --socket=x11
+  - --socket=pulseaudio
+  - --filesystem=home:ro
+  - --filesystem=xdg-config:rw
+  - --filesystem=xdg-cache:rw
+  - --filesystem=xdg-data:rw
+  - --talk-name=org.gtk.vfs.*
+  - --filesystem=xdg-run/gvfsd
+  - --filesystem=xdg-run/dconf
+  - --filesystem=~/.config/dconf:ro
+  - --talk-name=ca.desrt.dconf
+  - --env=DCONF_USER_CONFIG_DIR=.config/dconf
+modules:
+  - name: lua5.1
+    no-autogen: true
+    buildsystem: simple
+    build-commands:
+      - make linux install
+    sources:
+      - type: archive
+        url: https://www.lua.org/ftp/lua-5.1.tar.gz 
+        sha256: 7f5bb9061eb3b9ba1e406a5aa68001a66cb82bac95748839dc02dd10048472c1 
+      - type: shell
+        commands:
+          - sed -i 's|/usr/local|/app|' ./Makefile
+  - name: luajit
+    no-autogen: true
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - /share/man
+    sources:
+      - type: archive 
+        url: https://luajit.org/download/LuaJIT-2.0.5.tar.gz 
+        sha256: 874b1f8297c697821f561f9b73b57ffd419ed8f4278c82e05b48806d30c1e979 
+      - type: shell
+        commands:
+          - sed -i 's|/usr/local|/app|' ./Makefile
+  - name: luafilesystem 
+    no-autogen: true
+    sources:
+      - type: git 
+        url: https://github.com/lunarmodules/luafilesystem.git
+      - type: shell
+        commands:
+          - sed -i 's|/usr/local|/app|' ./config
+  - name: luakit
+    builddir: true
+    buildsystem: simple
+    build-commands:
+      - LIBGL_DRI3_DISABLE=1 WEBKIT_USE_SINGLE_WEB_PROCESS=1 make install
+    no-autogen: true
+    sources:
+      - type: git 
+        url: https://github.com/luakit/luakit.git 
+        branch: 2.2
+      - type: shell
+        commands:
+          - sed -i 's|/usr/local|/app|' ./config.mk
+          - sed -i 's|/etc/xdg|/app/etc/xdg|' ./config.mk
+          #make USE_LUAJIT=0 DEVELOPMENT_PATHS=1 PREFIX=/app install
+          #make LIBGL_DRI3_DISABLE=1 WEBKIT_USE_SINGLE_WEB_PROCESS=1 install
